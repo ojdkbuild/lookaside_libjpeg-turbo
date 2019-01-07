@@ -21,6 +21,8 @@ AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AC_PROG_LN_S
 
+PKG_PROG_PKG_CONFIG
+
 # Check whether compiler supports pointers to undefined structures
 AC_MSG_CHECKING(whether compiler supports pointers to undefined structures)
 AC_TRY_COMPILE([ typedef struct undefined_structure * undef_struct_ptr; ], ,
@@ -411,6 +413,8 @@ AC_CONFIG_FILES([pkgscripts/makemacpkg:release/makemacpkg.in])
 AC_CONFIG_FILES([pkgscripts/Description.plist:release/Description.plist.in])
 AC_CONFIG_FILES([pkgscripts/Info.plist:release/Info.plist.in])
 AC_CONFIG_FILES([pkgscripts/uninstall:release/uninstall.in])
+AC_CONFIG_FILES([pkgscripts/libjpeg.pc:release/libjpeg.pc.in])
+AC_CONFIG_FILES([pkgscripts/libturbojpeg.pc:release/libturbojpeg.pc.in])
 if test "x$with_turbojpeg" != "xno"; then
 AC_CONFIG_FILES([tjbenchtest])
 fi
