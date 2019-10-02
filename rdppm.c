@@ -76,7 +76,7 @@ typedef struct {
   JSAMPROW pixrow;		/* FAR pointer to same */
   size_t buffer_width;		/* width of I/O buffer */
   JSAMPLE *rescale;		/* => maxval-remapping array, or NULL */
-  int maxval;
+  unsigned int maxval;
 } ppm_source_struct;
 
 typedef ppm_source_struct * ppm_source_ptr;
@@ -126,7 +126,7 @@ read_pbm_integer (j_compress_ptr cinfo, FILE * infile, int maxval)
   }
 
   if (val > maxval)
-    ERREXIT(cinfo, JERR_PPM_TOOLARGE);
+    ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
 
   return val;
 }
