@@ -76,6 +76,7 @@ typedef struct {
   JSAMPROW pixrow;		/* FAR pointer to same */
   size_t buffer_width;		/* width of I/O buffer */
   JSAMPLE *rescale;		/* => maxval-remapping array, or NULL */
+  int maxval;
 } ppm_source_struct;
 
 typedef ppm_source_struct * ppm_source_ptr;
@@ -99,7 +100,7 @@ pbm_getc (FILE * infile)
 
 
 LOCAL(unsigned int)
-read_pbm_integer (j_compress_ptr cinfo, FILE * infile)
+read_pbm_integer (j_compress_ptr cinfo, FILE * infile, int maxval)
 /* Read an unsigned decimal integer from the PPM file */
 /* Swallows one trailing character after the integer */
 /* Note that on a 16-bit-int machine, only values up to 64k can be read. */
@@ -123,6 +124,10 @@ read_pbm_integer (j_compress_ptr cinfo, FILE * infile)
     val *= 10;
     val += ch - '0';
   }
+
+  if (val > maxval)
+    ERREXIT(cinfo, JERR_PPM_TOOLARGE);
+
   return val;
 }
 
@@ -147,10 +152,11 @@ get_text_gray_row (j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   register JSAMPROW ptr;
   register JSAMPLE *rescale = source->rescale;
   JDIMENSION col;
+  int maxval = source->maxval;
 
   ptr = source->pub.buffer[0];
   for (col = cinfo->image_width; col > 0; col--) {
-    *ptr++ = rescale[read_pbm_integer(cinfo, infile)];
+    *ptr++ = rescale[read_pbm_integer(cinfo, infile, maxval)];
   }
   return 1;
 }
@@ -165,12 +171,13 @@ get_text_rgb_row (j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   register JSAMPROW ptr;
   register JSAMPLE *rescale = source->rescale;
   JDIMENSION col;
+  int maxval = source->maxval;
 
   ptr = source->pub.buffer[0];
   for (col = cinfo->image_width; col > 0; col--) {
-    *ptr++ = rescale[read_pbm_integer(cinfo, infile)];
-    *ptr++ = rescale[read_pbm_integer(cinfo, infile)];
-    *ptr++ = rescale[read_pbm_integer(cinfo, infile)];
+    *ptr++ = rescale[read_pbm_integer(cinfo, infile, maxval)];
+    *ptr++ = rescale[read_pbm_integer(cinfo, infile, maxval)];
+    *ptr++ = rescale[read_pbm_integer(cinfo, infile, maxval)];
   }
   return 1;
 }
@@ -319,9 +326,9 @@ start_input_ppm (j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   }
 
   /* fetch the remaining header info */
-  w = read_pbm_integer(cinfo, source->pub.input_file);
-  h = read_pbm_integer(cinfo, source->pub.input_file);
-  maxval = read_pbm_integer(cinfo, source->pub.input_file);
+  w = read_pbm_integer(cinfo, source->pub.input_file, 65535);
+  h = read_pbm_integer(cinfo, source->pub.input_file, 65535);
+  maxval = read_pbm_integer(cinfo, source->pub.input_file, 65535);
 
   if (w <= 0 || h <= 0 || maxval <= 0) /* error check */
     ERREXIT(cinfo, JERR_PPM_NOT);
@@ -329,6 +336,7 @@ start_input_ppm (j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   cinfo->data_precision = BITS_IN_JSAMPLE; /* we always rescale data to this */
   cinfo->image_width = (JDIMENSION) w;
   cinfo->image_height = (JDIMENSION) h;
+  source->maxval = maxval;
 
   /* initialize flags to most common settings */
   need_iobuffer = TRUE;		/* do we need an I/O buffer? */
